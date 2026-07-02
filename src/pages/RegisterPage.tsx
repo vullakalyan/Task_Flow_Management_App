@@ -4,10 +4,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, Database, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AuthLayout } from '../components/layout';
 import { Button, Input } from '../components/ui';
+import { isUsingMock } from '../utils/supabase';
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(50, 'Name must be less than 50 characters'),
@@ -74,6 +75,9 @@ export function RegisterPage() {
       }
       setError(errorMessage);
       setIsLoading(false);
+    } else if (result.needsEmailVerification) {
+      setError('Please check your email for a confirmation link to complete your registration.');
+      setIsLoading(false);
     } else {
       navigate('/dashboard', { replace: true });
     }
@@ -82,6 +86,26 @@ export function RegisterPage() {
   return (
     <AuthLayout title="Create your account" subtitle="Get started with TaskFlow">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div className="mb-2">
+          {isUsingMock ? (
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-semibold">
+              <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold">Sandbox Mode (Offline Mock Database)</p>
+                <p className="text-[10px] text-amber-500/80 mt-0.5">Using locally simulated storage. Enter any email & password to register & test the app instantly!</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+              <Database className="h-4 w-4 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-emerald-400">Database: Connected</p>
+                <p className="text-[10px] text-emerald-400/80 mt-0.5">Successfully linked to your custom live Supabase backend.</p>
+              </div>
+            </div>
+          )}
+        </div>
+
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}

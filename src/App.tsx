@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute, PublicRoute } from './components/layout';
@@ -8,10 +8,10 @@ import { Spinner } from './components/ui';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
+import DashboardPage from './pages/DashboardPage';
+import BoardListPage from './pages/BoardListPage';
 
 // Lazy load other pages
-const DashboardPage = lazy(() => import('./pages/DashboardPage'));
-const BoardListPage = lazy(() => import('./pages/BoardListPage'));
 const BoardDetailPage = lazy(() => import('./pages/BoardDetailPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'));
@@ -27,7 +27,7 @@ function PageLoader() {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public routes */}
@@ -105,7 +105,7 @@ function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
-      </BrowserRouter>
+      </HashRouter>
     </AuthProvider>
   );
 }

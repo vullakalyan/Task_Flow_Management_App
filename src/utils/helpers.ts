@@ -76,5 +76,12 @@ export function getColumnStatus(columnTitle: string): string {
 }
 
 export function generateId(): string {
-  return crypto.randomUUID();
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+  } catch {
+    // Fallback if crypto.randomUUID() throws in insecure context
+  }
+  return 'id-' + Math.random().toString(36).substring(2) + Date.now().toString(36);
 }

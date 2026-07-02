@@ -1,8 +1,11 @@
+import { useNavigate } from 'react-router-dom';
 import { FileQuestion, Home, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/ui';
 import { PageWrapper, Navbar } from '../components/layout';
 
 export function NotFoundPage() {
+  const navigate = useNavigate();
+
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-[#080808]">
       <Navbar />
@@ -22,7 +25,7 @@ export function NotFoundPage() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go back
             </Button>
-            <Button onClick={() => window.location.href = '/dashboard'}>
+            <Button onClick={() => navigate('/dashboard')}>
               <Home className="h-4 w-4 mr-2" />
               Go to Dashboard
             </Button>

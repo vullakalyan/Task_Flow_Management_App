@@ -225,19 +225,20 @@ function MembersModal({
   const [error, setError] = useState<string | null>(null);
   const canManage = board.owner_id === user?.id || user?.role === 'admin';
 
+  const loadUsers = useCallback(async () => {
+    try {
+      const users = await api.getAllUsers();
+      setAllUsers(users.filter((u) => !board.members?.includes(u.id)));
+    } catch (err) {
+      console.error(err);
+    }
+  }, [board.members]);
+
   useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        const users = await api.getAllUsers();
-        setAllUsers(users.filter((u) => !board.members?.includes(u.id)));
-      } catch (err) {
-        console.error(err);
-      }
-    };
     if (isOpen && canManage) {
       loadUsers();
     }
-  }, [isOpen, canManage, board.members]);
+  }, [isOpen, canManage, loadUsers]);
 
   const handleRemoveMember = async (userId: string) => {
     try {

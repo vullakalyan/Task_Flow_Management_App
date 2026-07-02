@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -9,6 +10,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { toggleSandboxMode } from '../utils/supabase';
 import { PageWrapper, Navbar } from '../components/layout';
 import { Card, Button, EmptyState, Skeleton } from '../components/ui';
 import { cn, formatDate } from '../utils/helpers';
@@ -30,6 +32,7 @@ const priorityColors: Record<string, string> = {
 
 export function DashboardPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [myTasks, setMyTasks] = useState<Task[]>([]);
   const [overdueTasks, setOverdueTasks] = useState<Task[]>([]);
@@ -51,9 +54,15 @@ export function DashboardPage() {
       setStats(statsData);
       setMyTasks(myTasksData);
       setOverdueTasks(overdueTasksData);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      setError('Failed to load dashboard data');
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (errorMessage.includes('relation "public.boards" does not exist') || 
+          errorMessage.includes('schema cache')) {
+        setError('Database tables are missing. Please run the SQL migration scripts in your Supabase SQL Editor.');
+      } else {
+        setError('Failed to load dashboard data');
+      }
     } finally {
       setLoading(false);
     }
@@ -79,15 +88,29 @@ export function DashboardPage() {
   }
 
   if (error) {
+    const isDbMissing = error.includes('Database tables are missing');
     return (
       <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-[#080808]">
         <Navbar />
         <PageWrapper>
-          <EmptyState
-            title="Something went wrong"
-            description={error}
-            action={<Button onClick={loadDashboardData}>Try again</Button>}
-          />
+          <div className="max-w-2xl mx-auto py-12 px-4">
+            <EmptyState
+              title={isDbMissing ? "Database Setup Required" : "Something went wrong"}
+              description={error}
+              action={
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6">
+                  <Button onClick={loadDashboardData} variant="primary">
+                    Try connecting again
+                  </Button>
+                  {isDbMissing && (
+                    <Button onClick={() => toggleSandboxMode(true)} variant="secondary">
+                      Switch to Sandbox Mode (Offline Mock)
+                    </Button>
+                  )}
+                </div>
+              }
+            />
+          </div>
         </PageWrapper>
       </div>
     );
@@ -114,7 +137,7 @@ export function DashboardPage() {
         title={`Welcome back, ${user?.name || 'User'}`}
         subtitle="Here's an overview of your tasks"
         actions={
-          <Button leftIcon={<FolderKanban className="h-4 w-4" />} onClick={() => window.location.href = '/boards'}>
+          <Button leftIcon={<FolderKanban className="h-4 w-4" />} onClick={() => navigate('/boards')}>
             View all boards
           </Button>
         }
@@ -213,7 +236,7 @@ export function DashboardPage() {
                 Overdue Tasks
               </h3>
               {overdueTasks.length > 5 && (
-                <Button variant="ghost" size="sm" onClick={() => window.location.href = '/boards'}>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/boards')}>
                   View all
                 </Button>
               )}
@@ -259,7 +282,7 @@ export function DashboardPage() {
                 My Tasks
               </h3>
               {myTasks.length > 5 && (
-                <Button variant="ghost" size="sm" onClick={() => window.location.href = '/boards'}>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/boards')}>
                   View all
                 </Button>
               )}

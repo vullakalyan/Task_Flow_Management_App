@@ -1,3 +1,4 @@
+import { generateId } from '../utils/helpers';
 import supabase from '../utils/supabase';
 import type { Board, Task, User, BoardWithDetails, TaskWithDetails, DashboardStats } from '../types';
 
@@ -104,10 +105,10 @@ export const api = {
     if (!user) throw new Error('Not authenticated');
 
     const defaultColumns = [
-      { id: crypto.randomUUID(), title: 'To Do', order: 0, color: '#64748b' },
-      { id: crypto.randomUUID(), title: 'In Progress', order: 1, color: '#3b82f6' },
-      { id: crypto.randomUUID(), title: 'Review', order: 2, color: '#8b5cf6' },
-      { id: crypto.randomUUID(), title: 'Done', order: 3, color: '#22c55e' },
+      { id: generateId(), title: 'To Do', order: 0, color: '#64748b' },
+      { id: generateId(), title: 'In Progress', order: 1, color: '#3b82f6' },
+      { id: generateId(), title: 'Review', order: 2, color: '#8b5cf6' },
+      { id: generateId(), title: 'Done', order: 3, color: '#22c55e' },
     ];
 
     const { data, error } = await supabase

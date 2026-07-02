@@ -44,10 +44,11 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 -- Policies for users table
 DROP POLICY IF EXISTS "users_select_own" ON users;
-CREATE POLICY "users_select_own"
+DROP POLICY IF EXISTS "users_select_all" ON users;
+CREATE POLICY "users_select_all"
 ON users FOR SELECT
 TO authenticated
-USING (auth.uid() = id);
+USING (true);
 
 DROP POLICY IF EXISTS "users_update_own" ON users;
 CREATE POLICY "users_update_own"

@@ -15,7 +15,7 @@ import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortabl
 import { Plus, Search, Filter, X } from 'lucide-react';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { cn } from '../../utils/helpers';
+import { cn, generateId } from '../../utils/helpers';
 import type { Board, Task, Column as ColumnType, User } from '../../types';
 import Column from './Column';
 import TaskCard from '../task/TaskCard';
@@ -247,7 +247,7 @@ export function KanbanBoard({
     setLoading(true);
     try {
       const newColumn: ColumnType = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         title: newColumnTitle.trim(),
         order: columns.length,
         color: '#64748b',

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FolderPlus, LayoutGrid, List, Settings, Calendar, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { toggleSandboxMode } from '../utils/supabase';
 import { Navbar, PageWrapper } from '../components/layout';
 import { Button, Card, Spinner, EmptyState, Modal, Input, Dropdown, Badge, ConfirmDialog } from '../components/ui';
 import { cn, formatDate } from '../utils/helpers';
@@ -27,8 +28,14 @@ export function BoardListPage() {
       const data = await api.getBoards();
       setBoards(data);
       setError(null);
-    } catch {
-      setError('Failed to load boards');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      if (errorMessage.includes('relation "public.boards" does not exist') || 
+          errorMessage.includes('schema cache')) {
+        setError('Database tables are missing. Please run the SQL migration scripts in your Supabase SQL Editor.');
+      } else {
+        setError('Failed to load boards');
+      }
     } finally {
       setLoading(false);
     }
@@ -61,9 +68,20 @@ export function BoardListPage() {
       >
         {error ? (
           <EmptyState
-            title="Something went wrong"
+            title={error.includes('Database tables are missing') ? "Database Setup Required" : "Something went wrong"}
             description={error}
-            action={<Button onClick={loadBoards}>Try again</Button>}
+            action={
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-4">
+                <Button onClick={loadBoards} variant="primary">
+                  Try connecting again
+                </Button>
+                {error.includes('Database tables are missing') && (
+                  <Button onClick={() => toggleSandboxMode(true)} variant="secondary">
+                    Switch to Sandbox Mode (Offline Mock)
+                  </Button>
+                )}
+              </div>
+            }
           />
         ) : boards.length === 0 ? (
           <EmptyState
