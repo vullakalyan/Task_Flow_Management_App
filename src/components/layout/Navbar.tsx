@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, FolderKanban, LogOut, Menu, Settings, User, X, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { isUsingMock, toggleSandboxMode, hasRealCredentials } from '../../utils/supabase';
+import { checkDbStatus } from '../../services/api';
 import { cn } from '../../utils/helpers';
 import Avatar from '../ui/Avatar';
 import Dropdown from '../ui/Dropdown';
@@ -19,13 +19,17 @@ export function Navbar() {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showCredsWarning, setShowCredsWarning] = useState(false);
+  const [dbStatus, setDbStatus] = useState<{ connected: boolean; type: string }>({
+    connected: false,
+    type: 'In-Memory Store (Sandbox)',
+  });
+
+  useEffect(() => {
+    checkDbStatus().then(setDbStatus);
+  }, []);
 
   const handleConnectRealDb = () => {
-    if (hasRealCredentials()) {
-      toggleSandboxMode(false);
-    } else {
-      setShowCredsWarning(true);
-    }
+    setShowCredsWarning(true);
   };
 
   const userMenuItems = [
@@ -57,12 +61,12 @@ export function Navbar() {
           <span className="font-bold text-lg tracking-tight text-white/90">TaskFlow</span>
         </Link>
         <div className="flex items-center gap-3">
-          {isUsingMock && (
+          {!dbStatus.connected && (
             <button
               onClick={handleConnectRealDb}
               className="text-[11px] px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400 font-semibold animate-pulse hover:bg-orange-500/20 active:scale-95 transition-all cursor-pointer"
             >
-              Connect Real DB
+              Connect MongoDB
             </button>
           )}
           <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-white/60 hover:text-white">
@@ -99,17 +103,17 @@ export function Navbar() {
             })}
           </nav>
           
-          {isUsingMock && (
+          {!dbStatus.connected && (
             <div className="mt-4 mb-6 px-4 py-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400">
               <p className="text-xs font-semibold mb-1 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-                Sandbox Mode (Offline)
+                Server Sandbox Mode
               </p>
               <button
                 onClick={handleConnectRealDb}
                 className="text-[11px] underline hover:text-orange-300 font-medium cursor-pointer"
               >
-                Connect Real Database
+                Connect MongoDB Atlas
               </button>
             </div>
           )}
@@ -172,17 +176,17 @@ export function Navbar() {
           })}
         </nav>
 
-        {isUsingMock && (
+        {!dbStatus.connected && (
           <div className="mt-4 mb-6 px-4 py-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400">
             <p className="text-xs font-semibold mb-1 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-              Sandbox Mode (Offline)
+              Server Sandbox Mode
             </p>
             <button
               onClick={handleConnectRealDb}
               className="text-[11px] underline hover:text-orange-300 font-medium cursor-pointer text-left"
             >
-              Connect Real Database
+              Connect MongoDB Atlas
             </button>
           </div>
         )}
@@ -211,7 +215,7 @@ export function Navbar() {
       <Modal
         isOpen={showCredsWarning}
         onClose={() => setShowCredsWarning(false)}
-        title="Supabase Setup Required"
+        title="MongoDB Atlas Setup Required"
         size="md"
       >
         <div className="flex flex-col items-center text-center space-y-5">
@@ -221,10 +225,10 @@ export function Navbar() {
           
           <div className="space-y-2">
             <p className="text-sm text-white/70 leading-relaxed">
-              Your real Supabase database credentials are not configured yet. The app is currently running in <strong>Sandbox Mode (Offline)</strong> with simulated mock data so you can test it immediately.
+              Your real MongoDB Atlas connection is not configured yet. The application is running in <strong>In-Memory Server Sandbox Mode</strong>. Your data is active during your session but will reset when the server restarts.
             </p>
             <p className="text-sm text-white/70 leading-relaxed">
-              To connect your real, live database:
+              To connect your real, live MongoDB Atlas database:
             </p>
           </div>
 
@@ -232,19 +236,19 @@ export function Navbar() {
             <div className="flex gap-3">
               <div className="w-5 h-5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</div>
               <p className="text-xs text-white/60 leading-relaxed">
-                Open the <strong>Settings</strong> menu of your AI Studio environment (or your local <code>.env</code> file).
+                Open the <strong>Settings</strong> panel in the Google AI Studio environment.
               </p>
             </div>
             <div className="flex gap-3">
               <div className="w-5 h-5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</div>
               <p className="text-xs text-white/60 leading-relaxed">
-                Configure <code>VITE_SUPABASE_URL</code> to your live Supabase Project URL.
+                Add an Environment Variable named <code>MONGODB_URI</code> and set it to your MongoDB Atlas connection string (e.g. <code>mongodb+srv://...</code>).
               </p>
             </div>
             <div className="flex gap-3">
               <div className="w-5 h-5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</div>
               <p className="text-xs text-white/60 leading-relaxed">
-                Configure <code>VITE_SUPABASE_ANON_KEY</code> to your live Supabase anon/public key.
+                Optional: Add <code>JWT_SECRET</code> to secure your user authentication tokens.
               </p>
             </div>
           </div>
@@ -255,7 +259,7 @@ export function Navbar() {
               className="w-full"
               onClick={() => setShowCredsWarning(false)}
             >
-              Continue in Sandbox Mode
+              Continue in Server Sandbox
             </Button>
           </div>
         </div>
