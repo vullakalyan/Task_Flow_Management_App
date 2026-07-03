@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, LogOut, Menu, Settings, User, X, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, LogOut, Menu, Settings, User, X, AlertTriangle, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { checkDbStatus } from '../../services/api';
 import { cn } from '../../utils/helpers';
@@ -18,6 +18,7 @@ export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileExpanded, setIsProfileExpanded] = useState(false);
   const [showCredsWarning, setShowCredsWarning] = useState(false);
   const [dbStatus, setDbStatus] = useState<{ connected: boolean; type: string }>({
     connected: false,
@@ -77,7 +78,7 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-30 bg-[#080808] flex flex-col pt-20 px-6">
+        <div className="md:hidden fixed inset-0 z-30 bg-[#080808] flex flex-col pt-20 px-6 overflow-y-auto pb-8">
           <nav className="space-y-2 flex-grow">
             {navLinks.map((link) => {
               const isActive = location.pathname.startsWith(link.path);
@@ -120,24 +121,43 @@ export function Navbar() {
           
           {user && (
             <div className="mt-auto py-6 border-t border-white/5">
-              <Dropdown
-                trigger={
-                  <button className="flex items-center gap-3 w-full p-2 rounded-xl hover:bg-white/[0.02] transition-colors text-left">
-                    <Avatar name={user.name} src={user.avatar} size="sm" />
-                    <div className="flex flex-col overflow-hidden">
-                      <span className="text-sm font-medium text-white/90 truncate">{user.name}</span>
-                      <span className="text-xs text-white/40 truncate">System User</span>
-                    </div>
-                  </button>
-                }
-                items={userMenuItems}
-                onSelect={(val) => {
-                  handleUserMenu(val);
-                  setIsMobileMenuOpen(false);
-                }}
-                showChevron={false}
-                align="left"
-              />
+              <button
+                onClick={() => setIsProfileExpanded(!isProfileExpanded)}
+                className="flex items-center justify-between w-full p-2 rounded-xl hover:bg-white/[0.02] transition-colors text-left"
+              >
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <Avatar name={user.name} src={user.avatar} size="sm" />
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="text-sm font-medium text-white/90 truncate">{user.name}</span>
+                    <span className="text-xs text-white/40 truncate">System User</span>
+                  </div>
+                </div>
+                <ChevronDown className={cn("h-4 w-4 text-white/40 transition-transform duration-200", isProfileExpanded && "rotate-180")} />
+              </button>
+
+              {isProfileExpanded && (
+                <div className="mt-2 space-y-1 bg-white/[0.02] border border-white/5 rounded-xl p-1.5">
+                  {userMenuItems.map((item) => (
+                    <button
+                      key={item.value}
+                      onClick={() => {
+                        handleUserMenu(item.value);
+                        setIsMobileMenuOpen(false);
+                        setIsProfileExpanded(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2 text-sm text-left rounded-lg transition-colors",
+                        item.danger
+                          ? "text-orange-500 hover:bg-orange-500/10"
+                          : "text-white/70 hover:text-white hover:bg-white/5"
+                      )}
+                    >
+                      {item.icon && <span className="text-white/50">{item.icon}</span>}
+                      <span className="font-medium">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -207,6 +227,7 @@ export function Navbar() {
               onSelect={handleUserMenu}
               showChevron={false}
               align="left"
+              direction="up"
             />
           </div>
         )}

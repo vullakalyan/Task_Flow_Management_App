@@ -17,6 +17,7 @@ export interface DropdownProps {
   items: DropdownItem[];
   onSelect: (value: string) => void;
   align?: 'left' | 'right';
+  direction?: 'up' | 'down';
   className?: string;
   showChevron?: boolean;
 }
@@ -26,6 +27,7 @@ export function Dropdown({
   items,
   onSelect,
   align = 'left',
+  direction = 'down',
   className,
   showChevron = true,
 }: DropdownProps) {
@@ -67,13 +69,14 @@ export function Dropdown({
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: direction === 'up' ? 10 : -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: direction === 'up' ? 10 : -10 }}
             transition={{ duration: 0.15 }}
             className={cn(
-              'absolute z-50 mt-2 min-w-[200px] rounded-2xl bg-[#111111] border border-white/10',
+              'absolute z-50 min-w-[200px] rounded-2xl bg-[#111111] border border-white/10',
               'shadow-xl py-2 focus:outline-none backdrop-blur-xl',
+              direction === 'up' ? 'bottom-full mb-2' : 'top-full mt-2',
               align === 'right' ? 'right-0' : 'left-0'
             )}
           >
