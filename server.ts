@@ -11,7 +11,7 @@ import { createServer as createViteServer } from 'vite';
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'task-flow-mgmt-jwt-secret-key-2026';
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -25,6 +25,7 @@ function generateId() {
 
 // ----------------- MONGODB CONFIG & SCHEMAS -----------------
 let isMongoConnected = false;
+let mongoConnectionError: string | null = null;
 
 const UserSchema = new mongoose.Schema({
   _id: { type: String, required: true },
@@ -224,9 +225,11 @@ async function connectToDatabase() {
       serverSelectionTimeoutMS: 5000,
     });
     isMongoConnected = true;
+    mongoConnectionError = null;
     console.log('[Server] Successfully connected to MongoDB Atlas!');
     await seedDefaultData();
-  } catch (error) {
+  } catch (error: any) {
+    mongoConnectionError = error.message || String(error);
     console.error('[Server] Failed to connect to MongoDB Atlas:', error);
     console.warn('[Server] Falling back to In-Memory store for offline/sandbox mode.');
     isMongoConnected = false;
@@ -261,7 +264,9 @@ function authenticateToken(req: any, res: any, next: any) {
 app.get('/api/db-status', (req, res) => {
   res.json({
     connected: isMongoConnected,
-    type: isMongoConnected ? 'MongoDB Atlas' : 'In-Memory Store (Sandbox)'
+    type: isMongoConnected ? 'MongoDB Atlas' : 'In-Memory Store (Sandbox)',
+    hasUri: !!MONGODB_URI,
+    error: mongoConnectionError
   });
 });
 
@@ -1316,7 +1321,7 @@ async function setupVite() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
+    app.get('*all', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
